@@ -9,7 +9,7 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+//主要完成模块的管理工作
 #define NGX_MAX_DYNAMIC_MODULES  128
 
 

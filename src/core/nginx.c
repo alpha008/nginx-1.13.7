@@ -37,7 +37,7 @@ static ngx_conf_enum_t  ngx_debug_points[] = {
     { ngx_null_string, 0 }
 };
 
-
+// 这里命令列表
 static ngx_command_t  ngx_core_commands[] = {
 
     { ngx_string("daemon"),
@@ -198,6 +198,7 @@ main(int argc, char *const *argv)
     ngx_log_t        *log;
     ngx_uint_t        i;
     ngx_cycle_t      *cycle, init_cycle;
+	// 创建变量，通过第二个进行复制
     ngx_conf_dump_t  *cd;
     ngx_core_conf_t  *ccf;
 
@@ -330,7 +331,7 @@ main(int argc, char *const *argv)
     ngx_os_status(cycle->log);
 
     ngx_cycle = cycle;
-
+	// 从配置文件获取
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 
     if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) {
@@ -377,7 +378,7 @@ main(int argc, char *const *argv)
     if (ngx_process == NGX_PROCESS_SINGLE) {
         ngx_single_process_cycle(cycle);
 
-    } else {
+    } else { // 多进程开启
         ngx_master_process_cycle(cycle);
     }
 

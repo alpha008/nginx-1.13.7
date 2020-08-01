@@ -104,7 +104,7 @@ typedef struct {
     u_char                     addr[NGX_SOCKADDR_STRLEN + 1];
 } ngx_http_listen_opt_t;
 
-
+// http的状态
 typedef enum {
     NGX_HTTP_POST_READ_PHASE = 0,
 

@@ -20,7 +20,7 @@ typedef struct {
 #endif
 } ngx_shmtx_sh_t;
 
-
+// 获取锁
 typedef struct {
 #if (NGX_HAVE_ATOMIC_OPS)
     ngx_atomic_t  *lock;

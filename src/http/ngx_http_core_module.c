@@ -834,7 +834,7 @@ ngx_http_handler(ngx_http_request_t *r)
     ngx_http_core_run_phases(r);
 }
 
-
+// 状态机运转
 void
 ngx_http_core_run_phases(ngx_http_request_t *r)
 {
@@ -845,7 +845,7 @@ ngx_http_core_run_phases(ngx_http_request_t *r)
     cmcf = ngx_http_get_module_main_conf(r, ngx_http_core_module);
 
     ph = cmcf->phase_engine.handlers;
-
+	// 这里去执行，状态机
     while (ph[r->phase_handler].checker) {
 
         rc = ph[r->phase_handler].checker(r, &ph[r->phase_handler]);
@@ -1744,11 +1744,11 @@ ngx_http_send_header(ngx_http_request_t *r)
         r->headers_out.status = r->err_status;
         r->headers_out.status_line.len = 0;
     }
-
+// send函数 head + body 分卡处理
     return ngx_http_top_header_filter(r);
 }
 
-
+// 自己实现这个东西
 ngx_int_t
 ngx_http_output_filter(ngx_http_request_t *r, ngx_chain_t *in)
 {

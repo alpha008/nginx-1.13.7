@@ -167,8 +167,8 @@ static ngx_command_t  ngx_event_core_commands[] = {
 
 static ngx_event_module_t  ngx_event_core_module_ctx = {
     &event_core_name,
-    ngx_event_core_create_conf,            /* create configuration */
-    ngx_event_core_init_conf,              /* init configuration */
+    ngx_event_core_create_conf,            /* create configuration */   // 创建事件
+    ngx_event_core_init_conf,              /* init configuration */     // 初始化事件
 
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
@@ -214,12 +214,12 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
 #endif
     }
-
+	// 在处理之前共享了一把锁，多个进程间共享
     if (ngx_use_accept_mutex) {
         if (ngx_accept_disabled > 0) {
             ngx_accept_disabled--;
 
-        } else {
+        } else {// 尝试获取锁
             if (ngx_trylock_accept_mutex(cycle) == NGX_ERROR) {
                 return;
             }
@@ -238,7 +238,7 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     }
 
     delta = ngx_current_msec;
-
+	// 这里是核心 处理事件的地方
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;

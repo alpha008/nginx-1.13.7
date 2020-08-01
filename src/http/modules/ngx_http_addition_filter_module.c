@@ -196,7 +196,7 @@ ngx_http_addition_body_filter(ngx_http_request_t *r, ngx_chain_t *in)
     return ngx_http_send_special(r, NGX_HTTP_LAST);
 }
 
-
+// 头部 next部分
 static ngx_int_t
 ngx_http_addition_filter_init(ngx_conf_t *cf)
 {

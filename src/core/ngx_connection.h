@@ -16,18 +16,18 @@
 typedef struct ngx_listening_s  ngx_listening_t;
 
 struct ngx_listening_s {
-    ngx_socket_t        fd;
+    ngx_socket_t        fd;/* 文件描述符,即socket */
 
-    struct sockaddr    *sockaddr;
+    struct sockaddr    *sockaddr;/* socket地址 */
     socklen_t           socklen;    /* size of sockaddr */
     size_t              addr_text_max_len;
     ngx_str_t           addr_text;
 
     int                 type;
 
-    int                 backlog;
-    int                 rcvbuf;
-    int                 sndbuf;
+    int                 backlog;/* 日志 */
+    int                 rcvbuf;/* 数据接收buffer */
+    int                 sndbuf;	/* 数据发送的buffer */
 #if (NGX_HAVE_KEEPALIVE_TUNABLE)
     int                 keepidle;
     int                 keepintvl;
@@ -36,6 +36,7 @@ struct ngx_listening_s {
 
     /* handler of accepted connection */
     ngx_connection_handler_pt   handler;
+	/* 接收连接后的回调函数，回调方法：ngx_http_init_connection */
 
     void               *servers;  /* array of ngx_http_in_addr_t, for example */
 
@@ -117,20 +118,22 @@ typedef enum {
 #define NGX_SSL_BUFFERED       0x01
 #define NGX_HTTP_V2_BUFFERED   0x02
 
-
+// 既可以作为服务端，也可以作为客户端去连接别人 upstream	
 struct ngx_connection_s {
+	/* 关联其它的 ngx_connection_s */
+
     void               *data;
-    ngx_event_t        *read;
-    ngx_event_t        *write;
+    ngx_event_t        *read;/* 读取数据事件 */
+    ngx_event_t        *write; /* 写入事件*/
 
-    ngx_socket_t        fd;
+    ngx_socket_t        fd;/* socket句柄 */
 
-    ngx_recv_pt         recv;
-    ngx_send_pt         send;
-    ngx_recv_chain_pt   recv_chain;
-    ngx_send_chain_pt   send_chain;
+    ngx_recv_pt         recv;/* 接收数据的函数指针 */
+    ngx_send_pt         send; /* 发送数据的函数指针 */
+    ngx_recv_chain_pt   recv_chain;/* 批量接收数据的函数指针 */
+    ngx_send_chain_pt   send_chain;/* 批量发送数据的函数指针 */
 
-    ngx_listening_t    *listening;
+    ngx_listening_t    *listening; /* 该连接的网络监听数据结构 */
 
     off_t               sent;
 
@@ -140,7 +143,7 @@ struct ngx_connection_s {
 
     int                 type;
 
-    struct sockaddr    *sockaddr;
+    struct sockaddr    *sockaddr; // 封装了请求来的socket地址
     socklen_t           socklen;
     ngx_str_t           addr_text;
 
@@ -150,9 +153,11 @@ struct ngx_connection_s {
 #if (NGX_SSL || NGX_COMPAT)
     ngx_ssl_connection_t  *ssl;
 #endif
+	/* 本地监听socket的地址结构 */
 
     struct sockaddr    *local_sockaddr;
     socklen_t           local_socklen;
+	/* 用于接收和缓存客户端发来的字符流 */
 
     ngx_buf_t          *buffer;
 

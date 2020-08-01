@@ -175,13 +175,13 @@ static ngx_command_t  ngx_epoll_commands[] = {
       ngx_null_command
 };
 
-
+// 获取module上下文
 static ngx_event_module_t  ngx_epoll_module_ctx = {
     &epoll_name,
     ngx_epoll_create_conf,               /* create configuration */
     ngx_epoll_init_conf,                 /* init configuration */
 
-    {
+    {// 这下面对应的action
         ngx_epoll_add_event,             /* add an event */
         ngx_epoll_del_event,             /* delete an event */
         ngx_epoll_add_event,             /* enable an event */
@@ -365,7 +365,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
     nevents = epcf->events;
 
     ngx_io = ngx_os_io;
-
+// 这里进行赋值
     ngx_event_actions = ngx_epoll_module_ctx.actions;
 
 #if (NGX_HAVE_CLEAR_EVENT)
@@ -779,7 +779,7 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 
 #endif
 
-
+// 事件分发与处理都在这个里面
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {
@@ -837,6 +837,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         c = event_list[i].data.ptr;
 
         instance = (uintptr_t) c & 1;
+	// 获取一个连接
         c = (ngx_connection_t *) ((uintptr_t) c & (uintptr_t) ~1);
 
         rev = c->read;

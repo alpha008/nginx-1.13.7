@@ -34,7 +34,12 @@ struct ngx_shm_zone_s {
     ngx_uint_t                noreuse;  /* unsigned  noreuse:1; */
 };
 
+/*
+nginx 有一个全局的对象 ngx_cycle_s, 这个结构体囊括了所有的核心结构体，并控制这个进程的运行。比如 nginx 的配置文件，
+所有模块，以及连接，事件，内存池，日志等等，都存在 nginx_cycle_s 结构体中。由于这里只介绍 nginx 的事件驱动机制，
+因此只列出与之相关的一部分字段。
 
+*/
 struct ngx_cycle_s {
     void                  ****conf_ctx;
     ngx_pool_t               *pool;
@@ -48,7 +53,7 @@ struct ngx_cycle_s {
     ngx_connection_t         *free_connections;
     ngx_uint_t                free_connection_n;
 
-    ngx_module_t            **modules;
+    ngx_module_t            **modules; //二级指针
     ngx_uint_t                modules_n;
     ngx_uint_t                modules_used;    /* unsigned  modules_used:1; */
 

@@ -316,6 +316,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     c->log_error = NGX_ERROR_INFO;
 
     rev = c->read;
+	//recv函数
     rev->handler = ngx_http_wait_request_handler;
     c->write->handler = ngx_http_empty_handler;
 
@@ -376,7 +377,7 @@ ngx_http_init_connection(ngx_connection_t *c)
     }
 }
 
-
+// 进入了http的状态机
 static void
 ngx_http_wait_request_handler(ngx_event_t *rev)
 {
@@ -431,7 +432,7 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
         b->last = b->start;
         b->end = b->last + size;
     }
-
+	// 这里就调用了recv函数 存起来 size大小个
     n = c->recv(c, b->last, size);
 
     if (n == NGX_AGAIN) {
@@ -495,13 +496,14 @@ ngx_http_wait_request_handler(ngx_event_t *rev)
     c->log->action = "reading client request line";
 
     ngx_reusable_connection(c, 0);
-
+// 这里创建一个请求
+	// 这里创建一个请求
     c->data = ngx_http_create_request(c);
     if (c->data == NULL) {
         ngx_http_close_connection(c);
         return;
     }
-
+	// 处理请求行 
     rev->handler = ngx_http_process_request_line;
     ngx_http_process_request_line(rev);
 }
@@ -945,7 +947,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
     ngx_connection_t    *c;
     ngx_http_request_t  *r;
 
-    c = rev->data;
+    c = rev->data; // data request
     r = c->data;
 
     ngx_log_debug0(NGX_LOG_DEBUG_HTTP, rev->log, 0,
@@ -959,17 +961,18 @@ ngx_http_process_request_line(ngx_event_t *rev)
     }
 
     rc = NGX_AGAIN;
-
+	// 这里循环 一行行处理
     for ( ;; ) {
 
         if (rc == NGX_AGAIN) {
+			// 请求头
             n = ngx_http_read_request_header(r);
 
             if (n == NGX_AGAIN || n == NGX_ERROR) {
                 return;
             }
         }
-
+		// 解析头
         rc = ngx_http_parse_request_line(r, r->header_in);
 
         if (rc == NGX_OK) {
@@ -1043,7 +1046,7 @@ ngx_http_process_request_line(ngx_event_t *rev)
             }
 
             c->log->action = "reading client request headers";
-
+			// 批量的头
             rev->handler = ngx_http_process_request_headers;
             ngx_http_process_request_headers(rev);
 
@@ -1354,7 +1357,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
 
             continue;
         }
-
+// http状态 前面解析头，后面走这里
         if (rc == NGX_HTTP_PARSE_HEADER_DONE) {
 
             /* a whole header has been parsed successfully */
@@ -1365,7 +1368,7 @@ ngx_http_process_request_headers(ngx_event_t *rev)
             r->request_length += r->header_in->pos - r->header_name_start;
 
             r->http_state = NGX_HTTP_PROCESS_REQUEST_STATE;
-
+			//  处理头
             rc = ngx_http_process_request_header(r);
 
             if (rc != NGX_OK) {
@@ -1940,12 +1943,13 @@ ngx_http_process_request(ngx_http_request_t *r)
     (void) ngx_atomic_fetch_add(ngx_stat_writing, 1);
     r->stat_writing = 1;
 #endif
-
+	
     c->read->handler = ngx_http_request_handler;
     c->write->handler = ngx_http_request_handler;
     r->read_event_handler = ngx_http_block_reading;
 
     ngx_http_handler(r);
+	// 这里存在跳转
 
     ngx_http_run_posted_requests(c);
 }

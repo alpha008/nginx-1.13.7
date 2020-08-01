@@ -80,6 +80,8 @@ ngx_str_t  ngx_http_html_default_types[] = {
 };
 
 
+
+// 1. 
 static ngx_command_t  ngx_http_commands[] = {
 
     { ngx_string("http"),
@@ -329,7 +331,7 @@ ngx_http_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 
 
     /* optimize the lists of ports, addresses and server names */
-
+//2. ngx_http_optimize_servers
     if (ngx_http_optimize_servers(cf, cmcf, cmcf->ports) != NGX_OK) {
         return NGX_CONF_ERROR;
     }
@@ -447,7 +449,7 @@ ngx_http_init_headers_in_hash(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
     return NGX_OK;
 }
 
-
+// 状态机
 static ngx_int_t
 ngx_http_init_phase_handlers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf)
 {
@@ -1384,6 +1386,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
     }
 
     port = ports->elts;
+	// 多个server的存在 ，多个端口同时监听
     for (p = 0; p < ports->nelts; p++) {
 
         ngx_sort(port[p].addrs.elts, (size_t) port[p].addrs.nelts,
@@ -1408,7 +1411,7 @@ ngx_http_optimize_servers(ngx_conf_t *cf, ngx_http_core_main_conf_t *cmcf,
                 }
             }
         }
-
+//3. 开始监听的地方 	
         if (ngx_http_init_listening(cf, &port[p]) != NGX_OK) {
             return NGX_ERROR;
         }
@@ -1700,7 +1703,7 @@ ngx_http_init_listening(ngx_conf_t *cf, ngx_http_conf_port_t *port)
 static ngx_listening_t *
 ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
 {
-    ngx_listening_t           *ls;
+    ngx_listening_t           *ls; //这个监听的套接字初始化操作
     ngx_http_core_loc_conf_t  *clcf;
     ngx_http_core_srv_conf_t  *cscf;
 
@@ -1711,7 +1714,7 @@ ngx_http_add_listening(ngx_conf_t *cf, ngx_http_conf_addr_t *addr)
     }
 
     ls->addr_ntop = 1;
-
+	// 调用连接后，调用的就是下面这个函数
     ls->handler = ngx_http_init_connection;
 
     cscf = addr->default_server;

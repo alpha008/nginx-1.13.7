@@ -26,11 +26,13 @@ typedef struct {
 
 #endif
 
-
+// 事件数据结构
 struct ngx_event_s {
     void            *data;
+	/* 事件相关对象, 通常data指向ngx_connection_t连接对象. (开启异步IO后可能指向ngx_event_aio_t结构体) */
 
     unsigned         write:1;
+	/* 标识是否可以建立连接 */
 
     unsigned         accept:1;
 
@@ -456,11 +458,16 @@ typedef struct {
 
 typedef struct {
     ngx_str_t              *name;
+	//事件模块的名称，比如 epoll/select 等
 
     void                 *(*create_conf)(ngx_cycle_t *cycle);
+	 //create_conf和init_conf方法的调用可参见图9-3
+    //在解析配置项前，这个回调方法用于创建存储配置项参数的结构体
     char                 *(*init_conf)(ngx_cycle_t *cycle, void *conf);
+	   //在解析配置项完成后，init_conf方法会被调用，用以综合处理当前事件模块感兴趣的全部配置项
 
     ngx_event_actions_t     actions;
+	    //对于不同的事件驱动框架需要实现的10个抽象方法
 } ngx_event_module_t;
 
 
