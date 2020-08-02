@@ -162,21 +162,22 @@ static ngx_core_module_t  ngx_core_module_ctx = {
     ngx_core_module_init_conf
 };
 
-
+// typedef struct ngx_module_s          ngx_module_t;
 ngx_module_t  ngx_core_module = {
     NGX_MODULE_V1,
-    &ngx_core_module_ctx,                  /* module context */
-    ngx_core_commands,                     /* module directives */
-    NGX_CORE_MODULE,                       /* module type */
-    NULL,                                  /* init master */
-    NULL,                                  /* init module */
-    NULL,                                  /* init process */
-    NULL,                                  /* init thread */
-    NULL,                                  /* exit thread */
-    NULL,                                  /* exit process */
-    NULL,                                  /* exit master */
+    &ngx_core_module_ctx,  /* module context */ 
+    ngx_core_commands,     /* module directives */ 
+    NGX_CORE_MODULE,       /* module type */ 
+    NULL,                  /* init master */ 
+    NULL,                  /* init module */ 
+    NULL,                  /* init process */ 
+    NULL,                  /* init thread */ 
+    NULL,                  /* exit thread */ 
+    NULL,                  /* exit process */ 
+    NULL,                  /* exit master */ 
     NGX_MODULE_V1_PADDING
 };
+//  主要用于将配置信息设置到每个模块的配置文件数据结构上
 
 
 static ngx_uint_t   ngx_show_help;
@@ -191,8 +192,7 @@ static char        *ngx_signal;
 static char **ngx_os_environ;
 
 
-int ngx_cdecl
-main(int argc, char *const *argv)
+int ngx_cdecl main(int argc, char *const *argv)
 {
     ngx_buf_t        *b;
     ngx_log_t        *log;
@@ -287,8 +287,10 @@ main(int argc, char *const *argv)
     if (ngx_preinit_modules() != NGX_OK) {
         return 1;
     }
-
+	
+	// 全局变量初始化
     cycle = ngx_init_cycle(&init_cycle);
+	
     if (cycle == NULL) {
         if (ngx_test_config) {
             ngx_log_stderr(0, "configuration file %s test failed",
@@ -1007,7 +1009,7 @@ ngx_process_options(ngx_cycle_t *cycle)
 static void *
 ngx_core_module_create_conf(ngx_cycle_t *cycle)
 {
-    ngx_core_conf_t  *ccf;
+    ngx_core_conf_t  *ccf;  // 核心模块的配置信息
 
     ccf = ngx_pcalloc(cycle->pool, sizeof(ngx_core_conf_t));
     if (ccf == NULL) {
@@ -1024,27 +1026,21 @@ ngx_core_module_create_conf(ngx_cycle_t *cycle)
      *     ccf->cpu_affinity_n = 0;
      *     ccf->cpu_affinity = NULL;
      */
-
     ccf->daemon = NGX_CONF_UNSET;
     ccf->master = NGX_CONF_UNSET;
     ccf->timer_resolution = NGX_CONF_UNSET_MSEC;
     ccf->shutdown_timeout = NGX_CONF_UNSET_MSEC;
-
     ccf->worker_processes = NGX_CONF_UNSET;
     ccf->debug_points = NGX_CONF_UNSET;
-
     ccf->rlimit_nofile = NGX_CONF_UNSET;
     ccf->rlimit_core = NGX_CONF_UNSET;
-
     ccf->user = (ngx_uid_t) NGX_CONF_UNSET_UINT;
     ccf->group = (ngx_gid_t) NGX_CONF_UNSET_UINT;
-
     if (ngx_array_init(&ccf->env, cycle->pool, 1, sizeof(ngx_str_t))
         != NGX_OK)
     {
         return NULL;
     }
-
     return ccf;
 }
 

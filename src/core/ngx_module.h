@@ -273,7 +273,7 @@ ngx_int_t ngx_count_modules(ngx_cycle_t *cycle, ngx_uint_t type);
 ngx_int_t ngx_add_module(ngx_conf_t *cf, ngx_str_t *file,
     ngx_module_t *module, char **order);
 
-
+// 根据配置文件生成的模块数组，结构体数组
 extern ngx_module_t  *ngx_modules[];
 extern ngx_uint_t     ngx_max_module;
 

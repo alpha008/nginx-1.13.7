@@ -173,7 +173,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
     prev = NULL;
 #endif
 
-    if (filename) {
+    if (filename) {/* 打开配置文件： /usr/local/nginx/conf/nginx.conf */
 
         /* open configuration file */
 
@@ -195,14 +195,14 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
                           ngx_fd_info_n " \"%s\" failed", filename->data);
         }
 
-        cf->conf_file->buffer = &buf;
+        cf->conf_file->buffer = &buf;/* 配置文件buf，默认大小4096 */
 
         buf.start = ngx_alloc(NGX_CONF_BUFFER, cf->log);
         if (buf.start == NULL) {
             goto failed;
         }
 
-        buf.pos = buf.start;
+        buf.pos = buf.start;/* 读取配置文件数据，保存到cf->conf_file中 */
         buf.last = buf.start;
         buf.end = buf.last + NGX_CONF_BUFFER;
         buf.temporary = 1;
@@ -231,6 +231,9 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         }
 
     } else if (cf->conf_file->file.fd != NGX_INVALID_FILE) {
+			/**
+					 * 解析块：events {  worker_connections  1024; }
+					 */
 
         type = parse_block;
 
@@ -241,6 +244,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
     for ( ;; ) {
         rc = ngx_conf_read_token(cf);
+		/* 将配置信息解析成 token；仅仅是将配置文件的数据解析成一个个的单词，按行解析 */
 
         /*
          * ngx_conf_read_token() may return
@@ -255,6 +259,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         if (rc == NGX_ERROR) {
             goto done;
         }
+		/* 一个模块解析结束，则跳到done模块代码 */
 
         if (rc == NGX_CONF_BLOCK_DONE) {
 
@@ -265,6 +270,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
 
             goto done;
         }
+		/* 一个模块解析结束，则跳到done模块代码 */
 
         if (rc == NGX_CONF_FILE_DONE) {
 
@@ -288,6 +294,7 @@ ngx_conf_parse(ngx_conf_t *cf, ngx_str_t *filename)
         }
 
         /* rc == NGX_OK || rc == NGX_CONF_BLOCK_START */
+		/* 当遇到 NGX_CONF_BLOCK_START 和  NGX_OK*/
 
         if (cf->handler) {
 
@@ -367,16 +374,17 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
 
     for (i = 0; cf->cycle->modules[i]; i++) {
 
-        cmd = cf->cycle->modules[i]->commands;
+        cmd = cf->cycle->modules[i]->commands; // 获取模块的命令集
         if (cmd == NULL) {
             continue;
         }
-
+		/* 循环配置模块 */
         for ( /* void */ ; cmd->name.len; cmd++) {
 
             if (name->len != cmd->name.len) {
                 continue;
             }
+			/* 检查配置名称和token的第一个元素的名称是否一致，如果不一致，则说明命令不一样 */
 
             if (ngx_strcmp(name->data, cmd->name.data) != 0) {
                 continue;
@@ -445,6 +453,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
             /* set up the directive's configuration context */
 
             conf = NULL;
+			/* 设置配置文件的值  设置配置项对外面的配置信息； */
 
             if (cmd->type & NGX_DIRECT_CONF) {
                 conf = ((void **) cf->ctx)[cf->cycle->modules[i]->index];
@@ -460,7 +469,7 @@ ngx_conf_handler(ngx_conf_t *cf, ngx_int_t last)
                 }
             }
 
-            rv = cmd->set(cf, cmd, conf);
+            rv = cmd->set(cf, cmd, conf); // 这里调用支持的命令集的函数
 
             if (rv == NGX_CONF_OK) {
                 return NGX_OK;

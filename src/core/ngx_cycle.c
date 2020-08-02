@@ -51,7 +51,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     ngx_open_file_t     *file;
     ngx_listening_t     *ls, *nls;
     ngx_core_conf_t     *ccf, *old_ccf;
+	
     ngx_core_module_t   *module;
+	
     char                 hostname[NGX_MAXHOSTNAMELEN];
 
     ngx_timezone_update();
@@ -187,6 +189,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
 
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
+	
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
         return NULL;
@@ -212,8 +215,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     ngx_strlow(cycle->hostname.data, (u_char *) hostname, cycle->hostname.len);
 
-
+	// 全局变量模块数组初始化
     if (ngx_cycle_modules(cycle) != NGX_OK) {
+		
         ngx_destroy_pool(pool);
         return NULL;
     }
@@ -223,11 +227,10 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
-
         module = cycle->modules[i]->ctx;
-
+		// 模块文件创建
         if (module->create_conf) {
-            rv = module->create_conf(cycle);
+            rv = module->create_conf(cycle);  // 回调函数
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
@@ -239,7 +242,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     senv = environ;
 
-
+	/* 解析配置文件 */
     ngx_memzero(&conf, sizeof(ngx_conf_t));
     /* STUB: init array ? */
     conf.args = ngx_array_create(pool, 10, sizeof(ngx_str_t));
@@ -247,7 +250,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         ngx_destroy_pool(pool);
         return NULL;
     }
-
+	 /* 创建一个临时的内存池，后面会清空掉;conf也主要用于解析配置文件的临时变量 */
     conf.temp_pool = ngx_create_pool(NGX_CYCLE_POOL_SIZE, log);
     if (conf.temp_pool == NULL) {
         ngx_destroy_pool(pool);
@@ -259,25 +262,25 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     conf.cycle = cycle;
     conf.pool = pool;
     conf.log = log;
-    conf.module_type = NGX_CORE_MODULE;
-    conf.cmd_type = NGX_MAIN_CONF;
+    conf.module_type = NGX_CORE_MODULE;/* 配置文件模块类型 */
+    conf.cmd_type = NGX_MAIN_CONF; /* 命令集类型 */
 
 #if 0
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
-
+	// 主要解析命令行中的核心模块配置参数，例如：nginx -t -c /usr/local/nginx/conf/nginx.conf
     if (ngx_conf_param(&conf) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
         return NULL;
     }
-
+	// 主要解析配置文件/usr/local/nginx/conf/nginx.conf 信息
     if (ngx_conf_parse(&conf, &cycle->conf_file) != NGX_CONF_OK) {
         environ = senv;
         ngx_destroy_cycle_pools(&conf);
         return NULL;
     }
-
+	
     if (ngx_test_config && !ngx_quiet_mode) {
         ngx_log_stderr(0, "the configuration file %s syntax is ok",
                        cycle->conf_file.data);
@@ -291,9 +294,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         module = cycle->modules[i]->ctx;
 
         if (module->init_conf) {
-            if (module->init_conf(cycle,
-                                  cycle->conf_ctx[cycle->modules[i]->index])
-                == NGX_CONF_ERROR)
+            if (module->init_conf(cycle, cycle->conf_ctx[cycle->modules[i]->index]) == NGX_CONF_ERROR)
             {
                 environ = senv;
                 ngx_destroy_cycle_pools(&conf);
@@ -305,6 +306,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     if (ngx_process == NGX_PROCESS_SIGNALLER) {
         return cycle;
     }
+	
+  //  #define ngx_get_conf(conf_ctx, module)  cycle->conf_ctx[ngx_core_module.index]
 
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
 

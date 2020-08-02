@@ -207,7 +207,7 @@ ngx_event_accept(ngx_event_t *ev)
 
         *log = ls->log;
 
-        c->recv = ngx_recv;
+        c->recv = ngx_recv;  // 完成发送接收函数的初始化
         c->send = ngx_send;
         c->recv_chain = ngx_recv_chain;
         c->send_chain = ngx_send_chain;

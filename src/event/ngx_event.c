@@ -77,7 +77,7 @@ ngx_atomic_t         *ngx_stat_waiting = &ngx_stat_waiting0;
 #endif
 
 
-
+// 命令集
 static ngx_command_t  ngx_events_commands[] = {
 
     { ngx_string("events"),
@@ -90,14 +90,14 @@ static ngx_command_t  ngx_events_commands[] = {
       ngx_null_command
 };
 
-
+// 事件上下文
 static ngx_core_module_t  ngx_events_module_ctx = {
     ngx_string("events"),
     NULL,
     ngx_event_init_conf
 };
 
-
+// 事件模块
 ngx_module_t  ngx_events_module = {
     NGX_MODULE_V1,
     &ngx_events_module_ctx,                /* module context */
@@ -430,6 +430,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
     ngx_time_t          *tp;
     ngx_core_conf_t     *ccf;
     ngx_event_conf_t    *ecf;
+//#define ngx_get_conf(conf_ctx, module)  cycle->conf_ctx[ngx_events_module.index]
 
     cf = ngx_get_conf(cycle->conf_ctx, ngx_events_module);
     ecf = (*cf)[ngx_event_core_module.ctx_index];
@@ -511,7 +512,7 @@ ngx_event_module_init(ngx_cycle_t *cycle)
 
     ngx_accept_mutex_ptr = (ngx_atomic_t *) shared;
     ngx_accept_mutex.spin = (ngx_uint_t) -1;
-
+	// 设置共享锁
     if (ngx_shmtx_create(&ngx_accept_mutex, (ngx_shmtx_sh_t *) shared,
                          cycle->lock_file.data)
         != NGX_OK)
@@ -604,7 +605,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     if (ngx_event_timer_init(cycle->log) == NGX_ERROR) {
         return NGX_ERROR;
     }
-
+	// 遍历模块数组 
     for (m = 0; cycle->modules[m]; m++) {
         if (cycle->modules[m]->type != NGX_EVENT_MODULE) {
             continue;
@@ -680,8 +681,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #endif
 
-    cycle->connections =
-        ngx_alloc(sizeof(ngx_connection_t) * cycle->connection_n, cycle->log);
+    cycle->connections = ngx_alloc(sizeof(ngx_connection_t) * cycle->connection_n, cycle->log);
     if (cycle->connections == NULL) {
         return NGX_ERROR;
     }
@@ -818,8 +818,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 #else
 
-        rev->handler = (c->type == SOCK_STREAM) ? ngx_event_accept
-                                                : ngx_event_recvmsg;
+        rev->handler = (c->type == SOCK_STREAM) ? ngx_event_accept: ngx_event_recvmsg;
 
 #if (NGX_HAVE_REUSEPORT)
 
@@ -937,8 +936,7 @@ ngx_events_block(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
         m = cf->cycle->modules[i]->ctx;
 
         if (m->create_conf) {
-            (*ctx)[cf->cycle->modules[i]->ctx_index] =
-                                                     m->create_conf(cf->cycle);
+            (*ctx)[cf->cycle->modules[i]->ctx_index] = m->create_conf(cf->cycle);
             if ((*ctx)[cf->cycle->modules[i]->ctx_index] == NULL) {
                 return NGX_CONF_ERROR;
             }

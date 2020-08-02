@@ -198,6 +198,11 @@ static ngx_event_module_t  ngx_epoll_module_ctx = {
         ngx_epoll_done,                  /* done the events */
     }
 };
+	/*
+	在Nginx的启动过程中。ngx_epoll_init方法将会被调用，它主要做了两件事情：
+	1.调用epoll_create方法创建epoll对象。
+	2.创建event_list数组，用于进行epoll_wait调用时传递内核态的事件。
+	*/
 
 ngx_module_t  ngx_epoll_module = {
     NGX_MODULE_V1,
@@ -366,7 +371,7 @@ ngx_epoll_init(ngx_cycle_t *cycle, ngx_msec_t timer)
 
     ngx_io = ngx_os_io;
 // 这里进行赋值
-    ngx_event_actions = ngx_epoll_module_ctx.actions;
+    ngx_event_actions = ngx_epoll_module_ctx.actions;//讲epoll的方法进行复制屏蔽架构
 
 #if (NGX_HAVE_CLEAR_EVENT)
     ngx_event_flags = NGX_USE_CLEAR_EVENT
@@ -584,9 +589,9 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_connection_t    *c;
     struct epoll_event   ee;
 
-    c = ev->data;
+    c = ev->data;  // //每个事件的data成员都存放着其对应的ngx_connection_t连接
 
-    events = (uint32_t) event;
+    events = (uint32_t) event;//确定当前时间是读事件还是写事件
 
     if (event == NGX_READ_EVENT) {
         e = c->write;
@@ -602,7 +607,7 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
         events = EPOLLOUT;
 #endif
     }
-
+	//确定当前时间是读事件还是写事件
     if (e->active) {
         op = EPOLL_CTL_MOD;
         events |= prev;
@@ -623,13 +628,13 @@ ngx_epoll_add_event(ngx_event_t *ev, ngx_int_t event, ngx_uint_t flags)
     ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
                    "epoll add event: fd:%d op:%d ev:%08XD",
                    c->fd, op, ee.events);
-
+	//调用epoll_ctl方法向epoll中添加事件
     if (epoll_ctl(ep, op, c->fd, &ee) == -1) {
         ngx_log_error(NGX_LOG_ALERT, ev->log, ngx_errno,
                       "epoll_ctl(%d, %d) failed", op, c->fd);
         return NGX_ERROR;
     }
-
+	//标识为活跃事件
     ev->active = 1;
 #if 0
     ev->oneshot = (flags & NGX_ONESHOT_EVENT) ? 1 : 0;
@@ -796,7 +801,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 
     ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                    "epoll timer: %M", timer);
-
+	//一开始就是等待事件，最长等待时间为timer
     events = epoll_wait(ep, event_list, (int) nevents, timer);
 
     err = (events == -1) ? ngx_errno : 0;
@@ -832,15 +837,15 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                       "epoll_wait() returned no events without timeout");
         return NGX_ERROR;
     }
-
+	//循环开始处理收到的所有事件
     for (i = 0; i < events; i++) {
-        c = event_list[i].data.ptr;
+        c = event_list[i].data.ptr;  // ptr中存储的ngx_connection_t
 
         instance = (uintptr_t) c & 1;
-	// 获取一个连接
+	    // 获取一个连接
         c = (ngx_connection_t *) ((uintptr_t) c & (uintptr_t) ~1);
-
-        rev = c->read;
+	    // 取出读事件
+        rev = c->read;   // 指针类型      事件
 
         if (c->fd == -1 || rev->instance != instance) {
 
@@ -854,7 +859,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             continue;
         }
 
-        revents = event_list[i].events;
+        revents = event_list[i].events; // 按照顺序取出发生的事件
 
         ngx_log_debug3(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
                        "epoll: fd:%d ev:%04XD d:%p",
@@ -879,8 +884,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                           "strange epoll_wait() events fd:%d ev:%04XD",
                           c->fd, revents);
         }
-#endif
-
+#endif	
+		// 发生可读事件 且是活跃的
         if ((revents & EPOLLIN) && rev->active) {
 
 #if (NGX_HAVE_EPOLLRDHUP)
@@ -896,7 +901,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             if (flags & NGX_POST_EVENTS) {
                 queue = rev->accept ? &ngx_posted_accept_events
                                     : &ngx_posted_events;
-
+			//如果设置了NGX_POST_EVENTS标识，事件放入到相应的队列中
                 ngx_post_event(rev, queue);
 
             } else {
@@ -905,8 +910,8 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         }
 
         wev = c->write;
-
-        if ((revents & EPOLLOUT) && wev->active) {
+		// 发生可写事件 且是活跃的
+        if ((revents & EPOLLOUT) && wev->active) { 
 
             if (c->fd == -1 || wev->instance != instance) {
 

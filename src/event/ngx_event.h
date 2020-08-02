@@ -461,11 +461,9 @@ typedef struct {
 	//事件模块的名称，比如 epoll/select 等
 
     void                 *(*create_conf)(ngx_cycle_t *cycle);
-	 //create_conf和init_conf方法的调用可参见图9-3
-    //在解析配置项前，这个回调方法用于创建存储配置项参数的结构体
+	 //create_conf和init_conf方法在解析配置项前，这个回调方法用于创建存储配置项参数的结构体
     char                 *(*init_conf)(ngx_cycle_t *cycle, void *conf);
 	   //在解析配置项完成后，init_conf方法会被调用，用以综合处理当前事件模块感兴趣的全部配置项
-
     ngx_event_actions_t     actions;
 	    //对于不同的事件驱动框架需要实现的10个抽象方法
 } ngx_event_module_t;

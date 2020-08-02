@@ -41,7 +41,7 @@ nginx 有一个全局的对象 ngx_cycle_s, 这个结构体囊括了所有的核
 
 */
 struct ngx_cycle_s {
-    void                  ****conf_ctx;
+    void                  ****conf_ctx; // 获取上下文
     ngx_pool_t               *pool;
 
     ngx_log_t                *log;

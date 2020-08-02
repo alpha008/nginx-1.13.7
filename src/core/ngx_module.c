@@ -47,14 +47,12 @@ ngx_cycle_modules(ngx_cycle_t *cycle)
      * copy static modules to it
      */
 
-    cycle->modules = ngx_pcalloc(cycle->pool, (ngx_max_module + 1)
-                                              * sizeof(ngx_module_t *));
+    cycle->modules = ngx_pcalloc(cycle->pool, (ngx_max_module + 1) * sizeof(ngx_module_t *));
     if (cycle->modules == NULL) {
         return NGX_ERROR;
     }
-
-    ngx_memcpy(cycle->modules, ngx_modules,
-               ngx_modules_n * sizeof(ngx_module_t *));
+	// 将模块数组拷贝到全局变量modules中去
+    ngx_memcpy(cycle->modules, ngx_modules, ngx_modules_n * sizeof(ngx_module_t *));
 
     cycle->modules_n = ngx_modules_n;
 
