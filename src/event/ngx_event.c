@@ -75,18 +75,22 @@ static ngx_atomic_t   ngx_stat_waiting0;
 ngx_atomic_t         *ngx_stat_waiting = &ngx_stat_waiting0;
 
 #endif
+/**
+ * event模块命令集
+ * 回调函数：ngx_events_block
+ * 用于解析 event{} 块中的配置参数
+ */
 
 
-// 命令集
+// 当读取到events后，回调函数
 static ngx_command_t  ngx_events_commands[] = {
 
     { ngx_string("events"),
       NGX_MAIN_CONF|NGX_CONF_BLOCK|NGX_CONF_NOARGS,
-      ngx_events_block,
+      ngx_events_block,  // 设置回调函数
       0,
       0,
       NULL },
-
       ngx_null_command
 };
 
@@ -115,52 +119,43 @@ ngx_module_t  ngx_events_module = {
 
 
 static ngx_str_t  event_core_name = ngx_string("event_core");
-
-
 static ngx_command_t  ngx_event_core_commands[] = {
-
     { ngx_string("worker_connections"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_event_connections,
       0,
       0,
       NULL },
-
     { ngx_string("use"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_event_use,
       0,
       0,
       NULL },
-
     { ngx_string("multi_accept"),
       NGX_EVENT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       0,
       offsetof(ngx_event_conf_t, multi_accept),
       NULL },
-
     { ngx_string("accept_mutex"),
       NGX_EVENT_CONF|NGX_CONF_FLAG,
       ngx_conf_set_flag_slot,
       0,
       offsetof(ngx_event_conf_t, accept_mutex),
       NULL },
-
     { ngx_string("accept_mutex_delay"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_msec_slot,
       0,
       offsetof(ngx_event_conf_t, accept_mutex_delay),
       NULL },
-
     { ngx_string("debug_connection"),
       NGX_EVENT_CONF|NGX_CONF_TAKE1,
       ngx_event_debug_connection,
       0,
       0,
       NULL },
-
       ngx_null_command
 };
 
@@ -172,8 +167,7 @@ static ngx_event_module_t  ngx_event_core_module_ctx = {
 
     { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL }
 };
-
-
+//ngx_event_core_module 事件核心模块
 ngx_module_t  ngx_event_core_module = {
     NGX_MODULE_V1,
     &ngx_event_core_module_ctx,            /* module context */
@@ -190,6 +184,12 @@ ngx_module_t  ngx_event_core_module = {
 };
 
 
+// 重要！！
+// 在ngx_process_cycle.c:ngx_single_process_cycle/ngx_worker_process_cycle里调用
+// 处理socket读写事件和定时器事件
+// 获取负载均衡锁，监听端口接受连接
+// 调用epoll模块的ngx_epoll_process_events获取发生的事件
+// 然后处理超时事件和在延后队列里的所有事件
 void
 ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
@@ -239,6 +239,17 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 
     delta = ngx_current_msec;
 	// 这里是核心 处理事件的地方
+	    // #define ngx_process_events   ngx_event_actions.process_events
+    // 实际上就是ngx_epoll_process_events
+    //
+    // epoll模块核心功能，调用epoll_wait处理发生的事件
+    // 使用event_list和nevents获取内核返回的事件
+    // timer是无事件发生时最多等待的时间，即超时时间
+    // 如果ngx_event_find_timer返回timer==0，那么epoll不会等待，立即返回
+    // 函数可以分为两部分，一是用epoll获得事件，二是处理事件，加入延后队列
+    //
+    // 如果不使用负载均衡（accept_mutex off）
+    // 那么所有IO事件均在此函数里处理，即搜集事件并调用handler
     (void) ngx_process_events(cycle, timer, flags);
 
     delta = ngx_current_msec - delta;

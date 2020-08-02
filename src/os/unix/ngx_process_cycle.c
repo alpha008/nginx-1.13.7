@@ -722,19 +722,26 @@ ngx_master_process_exit(ngx_cycle_t *cycle)
     exit(0);
 }
 
-// 子进程执行的地方
+// 传递给ngx_spawn_process()，是worker进程的核心功能
+// data实际上是进程号, (void *) (intptr_t) i
 static void
 ngx_worker_process_cycle(ngx_cycle_t *cycle, void *data)
 {
+	// 把data再转换为进程序号
     ngx_int_t worker = (intptr_t) data;
+	// 设置进程状态
 
     ngx_process = NGX_PROCESS_WORKER;
     ngx_worker = worker;
+	// 这里把进程号赋值给全局变量
+    // 读取核心配置，设置cpu优先级,core dump信息,unix运行的group/user
+    // 切换工作路径,根据pid设置随机数种子
+    // 调用所有模块的init_process,让模块进程初始化
 
     ngx_worker_process_init(cycle, worker);
 
     ngx_setproctitle("worker process");
-
+    // 无限循环，处理事件和信号
     for ( ;; ) {
 
         if (ngx_exiting) {
