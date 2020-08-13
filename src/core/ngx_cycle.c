@@ -607,7 +607,7 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 #endif
         }
     }
-
+//这个函数负责将创建的监听套接字进行套接字选项的设置（比如非阻塞、接受发送的缓冲区、绑定、监听处理）
     if (ngx_open_listening_sockets(cycle) != NGX_OK) {
         goto failed;
     }
