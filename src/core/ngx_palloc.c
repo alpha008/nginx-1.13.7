@@ -118,16 +118,18 @@ ngx_reset_pool(ngx_pool_t *pool)
     pool->large = NULL;
 }
 
-
+// 分配对其的内存，速度快，可能有少量浪费
+// 多用于创建结构体
 void *
 ngx_palloc(ngx_pool_t *pool, size_t size)
 {
 #if !(NGX_DEBUG_PALLOC)
+// 如果要求少于4k的内存，对齐分配
     if (size <= pool->max) {
         return ngx_palloc_small(pool, size, 1);
     }
 #endif
-
+    // 分配大块内存，直接调用malloc
     return ngx_palloc_large(pool, size);
 }
 

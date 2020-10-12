@@ -8,17 +8,18 @@
 #include <ngx_config.h>
 #include <ngx_core.h>
 
-
+// 使用内存池创建一个可容纳n个大小为size元素的数组，即分配了一块n*size大小的内存块
+// size参数通常需要使用sizeof(T)
 ngx_array_t *
 ngx_array_create(ngx_pool_t *p, ngx_uint_t n, size_t size)
 {
     ngx_array_t *a;
-
+// 内存池分配一个数组结构体
     a = ngx_palloc(p, sizeof(ngx_array_t));
     if (a == NULL) {
         return NULL;
     }
-
+// 重新分配数组的内存空间，相当于resize
     if (ngx_array_init(a, p, n, size) != NGX_OK) {
         return NULL;
     }

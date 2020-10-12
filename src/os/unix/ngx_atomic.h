@@ -102,16 +102,17 @@ typedef unsigned long               ngx_atomic_uint_t;
 #else
 #define NGX_ATOMIC_T_LEN            (sizeof("-2147483648") - 1)
 #endif
-
+// 原子类型实际上都是长整数
+// 使用volatile修饰，进制编译器优化缓存，即时取值
 typedef volatile ngx_atomic_uint_t  ngx_atomic_t;
 
-
+// cas 赋值
 #define ngx_atomic_cmp_set(lock, old, set)                                    \
     __sync_bool_compare_and_swap(lock, old, set)
-
+// cas加法
 #define ngx_atomic_fetch_add(value, add)                                      \
     __sync_fetch_and_add(value, add)
-
+// 内存屏障      并发操作的同步点
 #define ngx_memory_barrier()        __sync_synchronize()
 
 #if ( __i386__ || __i386 || __amd64__ || __amd64 )

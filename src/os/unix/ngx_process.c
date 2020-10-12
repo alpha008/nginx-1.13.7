@@ -182,7 +182,7 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
 
     ngx_process_slot = s;
 
-
+// 调用fork产生子进程
     pid = fork();
 
     switch (pid) {
@@ -193,10 +193,16 @@ ngx_spawn_process(ngx_cycle_t *cycle, ngx_spawn_proc_pt proc, void *data,
         ngx_close_channel(ngx_processes[s].channel, cycle->log);
         return NGX_INVALID_PID;
 
+// 
     case 0:
+//0 是子进程，开始执行worker进程的核心函数
+// 获取父进程的pid，
         ngx_pid = ngx_getpid();
         proc(cycle, data);
         break;
+// 这里是子进程的真正工作，无限循环
+// proc = ngx_worker_process_cycle
+// data = (void *) (intptr_t) i，即worker id
 
     default:
         break;
