@@ -783,15 +783,13 @@ ngx_epoll_notify(ngx_event_handler_pt handler)
 }
 
 #endif
-
-
-// epoll模块核心功能，调用epoll_wait处理发生的事件
-// 使用event_list和nevents获取内核返回的事件
-// timer是无事件发生时最多等待的时间，即超时时间
-// 如果ngx_event_find_timer返回timer==0，那么epoll不会等待，立即返回
-// 函数可以分为两部分，一是用epoll获得事件，二是处理事件，加入延后队列
-// 函数里不处理定时器，因为定时器不属于epoll事件
-
+/*
+epoll模块核心功能，调用epoll_wait处理发生的事件，使用event_list和wvents获取内核返回的事件，
+timer是无事件发生时最多等待的时间，即超时时间
+如果ngx_event_find_timer返回timer==0，那么wpoll不会等待，立即返回
+函数分为两部分，一部分是epoll获得事件  二是处理事件加入延后队列
+函数里不处理定时器，因为定时器不属于epoll事件
+*/
 static ngx_int_t
 ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
 {

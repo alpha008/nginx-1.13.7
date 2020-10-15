@@ -50,7 +50,10 @@ struct ngx_cycle_s {
     ngx_uint_t                log_use_stderr;  /* unsigned  log_use_stderr:1; */
 
     ngx_connection_t        **files;
+    // 空闲连接，使用指针串成单项链表
+    // 指向第一个空闲连接，即头结点
     ngx_connection_t         *free_connections;
+    // 空闲连接的数量
     ngx_uint_t                free_connection_n;
 
     ngx_module_t            **modules; //二级指针

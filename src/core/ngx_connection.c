@@ -1098,20 +1098,25 @@ ngx_get_connection(ngx_socket_t s, ngx_log_t *log)
     return c;
 }
 
-
+// 释放一个连接，加入空闲链表
 void
 ngx_free_connection(ngx_connection_t *c)
 {
+    //调整空闲链表的指针，复用data成员
+    //free_connections是空闲链表头指针
     c->data = ngx_cycle->free_connections;
+    // 空闲链表头指针指向连接对象
     ngx_cycle->free_connections = c;
+    // 空闲连接数量增加
     ngx_cycle->free_connection_n++;
-
+    // 如果使用epoll，那么files指针通常是null，即不会使用
     if (ngx_cycle->files && ngx_cycle->files[c->fd] == c) {
         ngx_cycle->files[c->fd] = NULL;
     }
 }
 
-
+// 关闭连接，删除epoll里面的读写事件
+// 释放连接，加入空闲链表，表示可以再次使用
 void
 ngx_close_connection(ngx_connection_t *c)
 {
@@ -1123,11 +1128,11 @@ ngx_close_connection(ngx_connection_t *c)
         ngx_log_error(NGX_LOG_ALERT, c->log, 0, "connection already closed");
         return;
     }
-
+    // 读事件在定时器里面，需要删除
     if (c->read->timer_set) {
         ngx_del_timer(c->read);
     }
-
+    // 写 事件在定时器里，需要删除
     if (c->write->timer_set) {
         ngx_del_timer(c->write);
     }

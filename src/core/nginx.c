@@ -162,6 +162,12 @@ static ngx_core_module_t  ngx_core_module_ctx = {
     ngx_core_module_init_conf
 };
 
+/*
+struct ngx_module_s {
+    ngx_uint_t            ctx_index;
+    ngx_uint_t            index;
+
+*/
 // typedef struct ngx_module_s          ngx_module_t;
 ngx_module_t  ngx_core_module = {
     NGX_MODULE_V1,
@@ -197,10 +203,9 @@ int ngx_cdecl main(int argc, char *const *argv)
     ngx_buf_t        *b;
     ngx_log_t        *log;
     ngx_uint_t        i;
-    ngx_cycle_t      *cycle, init_cycle;
-	// 创建变量，通过第二个进行复制
+    ngx_cycle_t      *cycle, init_cycle;// 创建该变量为局部变量，但cycle为全局指针
     ngx_conf_dump_t  *cd;
-    ngx_core_conf_t  *ccf;
+    ngx_core_conf_t  *ccf;//配置文件
 
     ngx_debug_init();
 
@@ -245,7 +250,7 @@ int ngx_cdecl main(int argc, char *const *argv)
      * ngx_process_options()
      */
 
-    ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));
+    ngx_memzero(&init_cycle, sizeof(ngx_cycle_t));//init_cycle 初始化
     init_cycle.log = log;
     ngx_cycle = &init_cycle;
 
@@ -287,10 +292,9 @@ int ngx_cdecl main(int argc, char *const *argv)
     if (ngx_preinit_modules() != NGX_OK) {
         return 1;
     }
-	
-	// 全局变量初始化
+    // 局部变量的指针
     cycle = ngx_init_cycle(&init_cycle);
-	
+
     if (cycle == NULL) {
         if (ngx_test_config) {
             ngx_log_stderr(0, "configuration file %s test failed",
@@ -332,10 +336,26 @@ int ngx_cdecl main(int argc, char *const *argv)
 
     ngx_os_status(cycle->log);
 
-    ngx_cycle = cycle;
-	// 从配置文件获取
+    ngx_cycle = cycle; // 赋值给全局变量
+    // 从配置文件获取
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+/*
+    // typedef struct ngx_module_s          ngx_module_t;
+    ngx_module_t  ngx_core_module = {
+        NGX_MODULE_V1,
+        &ngx_core_module_ctx,  // module context    指向的是这个index
 
+
+    // ngx_init_cycle()里已经解析了配置文件
+    // 检查core模块的配置
+
+    ngx_get_conf(cycle->conf_ctx, ngx_core_module) =  cycle->conf_ctx[ngx_core_module.index]
+
+    #define ngx_get_conf(cycle->conf_ctx, ngx_core_module)  cycle->conf_ctx[ngx_core_module.index]
+
+    ngx_get_conf(cycle->conf_ctx, ngx_core_module);
+
+*/
     if (ccf->master && ngx_process == NGX_PROCESS_SINGLE) {
         ngx_process = NGX_PROCESS_MASTER;
     }
@@ -867,7 +887,7 @@ ngx_get_options(int argc, char *const *argv)
     return NGX_OK;
 }
 
-
+// 保存环境变量，保存在全局指针中
 static ngx_int_t
 ngx_save_argv(ngx_cycle_t *cycle, int argc, char *const *argv)
 {

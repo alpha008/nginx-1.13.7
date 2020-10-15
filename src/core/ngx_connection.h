@@ -117,13 +117,17 @@ typedef enum {
 #define NGX_LOWLEVEL_BUFFERED  0x0f
 #define NGX_SSL_BUFFERED       0x01
 #define NGX_HTTP_V2_BUFFERED   0x02
-
+/*
+连接结构体，表示nginx里面的一个tcp连接
+每个连接都有一个读事件和写事件，使用数组序号对应
+nginx里面连接对象都保存在ngx_cycle_t::connections数组里面
+*/
 // 既可以作为服务端，也可以作为客户端去连接别人 upstream	
 struct ngx_connection_s {
 	/* 关联其它的 ngx_connection_s */
 
     void               *data;
-    ngx_event_t        *read;/* 读取数据事件 */
+    ngx_event_t        *read;  /* 读取数据事件 */
     ngx_event_t        *write; /* 写入事件*/
 
     ngx_socket_t        fd;/* socket句柄 */
