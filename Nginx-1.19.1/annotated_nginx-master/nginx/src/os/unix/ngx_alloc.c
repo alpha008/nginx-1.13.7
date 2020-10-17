@@ -31,8 +31,7 @@ ngx_alloc(size_t size, ngx_log_t *log)
 
     p = malloc(size);
     if (p == NULL) {
-        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,
-                      "malloc(%uz) failed", size);
+        ngx_log_error(NGX_LOG_EMERG, log, ngx_errno,"malloc(%uz) failed", size);
     }
 
     ngx_log_debug2(NGX_LOG_DEBUG_ALLOC, log, 0, "malloc: %p:%uz", p, size);
@@ -42,8 +41,7 @@ ngx_alloc(size_t size, ngx_log_t *log)
 
 
 // 封装C库函数malloc，可以记录错误日志
-void *
-ngx_calloc(size_t size, ngx_log_t *log)
+void * ngx_calloc(size_t size, ngx_log_t *log)
 {
     void  *p;
 
@@ -60,8 +58,7 @@ ngx_calloc(size_t size, ngx_log_t *log)
 #if (NGX_HAVE_POSIX_MEMALIGN)
 
 // 对齐分配内存
-void *
-ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
+void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
     void  *p;
     int    err;
@@ -82,8 +79,7 @@ ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 
 #elif (NGX_HAVE_MEMALIGN)
 
-void *
-ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
+void *ngx_memalign(size_t alignment, size_t size, ngx_log_t *log)
 {
     void  *p;
 

@@ -774,8 +774,8 @@ tz_found:
         *last = n;
 
     } else {
-        cln = ngx_pool_cleanup_add(cycle->pool, 0);
-        if (cln == NULL) {
+        cln = ngx_pool_cleanup_add(cycle->pool, 0); // 参数为0时，需要自己填充数据
+        if (cln == NULL) { 
             return NULL;
         }
 

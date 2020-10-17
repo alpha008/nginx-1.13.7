@@ -681,7 +681,6 @@ ngx_insert_udp_connection(ngx_connection_t *c)
     if (cln == NULL) {
         return NGX_ERROR;
     }
-
     // 清理函数，会删除红黑树节点
     cln->data = c;
     cln->handler = ngx_delete_udp_connection;

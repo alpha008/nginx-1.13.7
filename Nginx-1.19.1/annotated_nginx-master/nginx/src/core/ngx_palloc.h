@@ -83,14 +83,11 @@ typedef struct {
     // last的意思是分配内存后的最后位置
     // 小块内存每次都从这里分配
     u_char               *last;
-
     // 可用内存的结束位置
     // 即此内存块的末地址
     u_char               *end;
-
     // 下一个内存池节点
     ngx_pool_t           *next;
-
     // 本节点分配失败次数
     // 失败超过4次则本节点认为满，不再参与分配
     // 注意满的内存块不会主动回收
@@ -107,25 +104,18 @@ typedef struct {
 struct ngx_pool_s {
     // 描述本内存池节点的信息
     ngx_pool_data_t       d;
-
     // 下面的字段仅在第一个块中有意义
     // 其他块中不存在，被用于分配内存
-
     // 可分配的最大块
     // 不能超过NGX_MAX_ALLOC_FROM_POOL,即4k-1
     size_t                max;
-
     // 当前使用的内存池节点
     ngx_pool_t           *current;
-
     // 为chain做的优化，空闲缓冲区链表
     ngx_chain_t          *chain;
-
     // 大块的内存，串成链表
     ngx_pool_large_t     *large;
-
     ngx_pool_cleanup_t   *cleanup;      //清理链表头指针
-
     ngx_log_t            *log;
 };
 
