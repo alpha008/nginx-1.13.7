@@ -42,7 +42,7 @@ typedef struct {
 struct ngx_event_s {
     // 事件相关的对象，通常是ngx_connection_t
     // 在多线程通知里是ngx_event_handler_pt，即通知回调函数
-    void            *data;
+    void            *data;//在连接池中，通过data前后相连接
 
     // 写事件，也就是说tcp连接是写状态，可以发送数据
     // 如果是0，意味着这个事件是读事件
@@ -155,7 +155,7 @@ struct ngx_event_s {
     // ngx_core.h:typedef void (*ngx_event_handler_pt)(ngx_event_t *ev);
     // tcp/http接受连接时的回调是ngx_event_accept
     // udp接受连接时的回调是ngx_event_recvmsg
-    ngx_event_handler_pt  handler;
+    ngx_event_handler_pt  handler; // 回调函数
 
 
 #if (NGX_HAVE_IOCP)

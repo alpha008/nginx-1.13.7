@@ -1068,70 +1068,49 @@ ngx_event_process_init(ngx_cycle_t *cycle)
     if (cycle->connections == NULL) {
         return NGX_ERROR;
     }
-
     c = cycle->connections;
-
     // 创建读事件池数组，大小是cycle->connection_n
     cycle->read_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n,  cycle->log);
     if (cycle->read_events == NULL) {
         return NGX_ERROR;
     }
-
     // 读事件对象初始化
     rev = cycle->read_events;
     for (i = 0; i < cycle->connection_n; i++) {
         rev[i].closed = 1;
         rev[i].instance = 1;
     }
-
     // 创建写事件池数组，大小是cycle->connection_n
     cycle->write_events = ngx_alloc(sizeof(ngx_event_t) * cycle->connection_n, cycle->log);
     if (cycle->write_events == NULL) {
         return NGX_ERROR;
     }
-
     // 写事件对象初始化
     wev = cycle->write_events;
     for (i = 0; i < cycle->connection_n; i++) {
         wev[i].closed = 1;
     }
-
     // i是数组的末尾
     i = cycle->connection_n;
     next = NULL;
 
-    // 把连接对象与读写事件关联起来
-    // 注意i是数组的末尾，从最后遍历
-    do {
+    do {// 把连接对象与读写事件关联起来  // 注意i是数组的末尾，从最后遍历
         i--;
-
-        // 使用data成员，把连接对象串成链表
-        c[i].data = next;
-
-        // 读写事件
-        c[i].read = &cycle->read_events[i];
+        c[i].data = next;                     // 使用data成员，把连接对象串成链表
+        c[i].read = &cycle->read_events[i];   // 读写事件
         c[i].write = &cycle->write_events[i];
-
-        // 连接的描述符是-1，表示无效
-        c[i].fd = (ngx_socket_t) -1;
-
-        // next指针指向数组的前一个元素
-        next = &c[i];
+        c[i].fd = (ngx_socket_t) -1;          // 连接的描述符是-1，表示无效
+        next = &c[i];                         // next指针指向数组的前一个元素
     } while (i);
-
-    // 连接对象已经串成链表，现在设置空闲链表指针
-    // 此时next指向连接对象数组的第一个元素
-    cycle->free_connections = next;
-
-    // 连接没有使用，全是空闲连接
-    cycle->free_connection_n = cycle->connection_n;
-
-    /* for each listening socket */
-
-    // 为每个监听端口分配一个连接对象
+    
+    cycle->free_connections = next;// 连接对象已经串成链表，现在设置空闲链表指针,此时
+    //next指向连接对象数组的第一个元素
+    cycle->free_connection_n = cycle->connection_n;// 连接没有使用，全是空闲连接
+    
+    /* for each listening socket */ // 为每个监听端口分配一个连接对象
     ls = cycle->listening.elts;
+    
     for (i = 0; i < cycle->listening.nelts; i++) {
-
 #if (NGX_HAVE_REUSEPORT)
         // 注意这里
         // 只有worker id是本worker的listen才会enable
@@ -1141,10 +1120,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
             continue;
         }
 #endif
-
-        // 获取一个空闲连接
-        c = ngx_get_connection(ls[i].fd, cycle->log);
-
+        c = ngx_get_connection(ls[i].fd, cycle->log);// 获取一个空闲连接
         if (c == NULL) {
             return NGX_ERROR;
         }
@@ -1159,9 +1135,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
         // 监听端口只关心读事件
         rev = c->read; // 监听端口只关心可读事件
-
         rev->log = c->log;
-
         // 设置accept标志，接受连接
         rev->accept = 1;
 
