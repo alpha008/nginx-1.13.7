@@ -192,8 +192,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
 
     // 启动worker进程，数量由配置决定，即worker_processes指令
     // #define NGX_PROCESS_RESPAWN       -3
-    ngx_start_worker_processes(cycle, ccf->worker_processes,
-                               NGX_PROCESS_RESPAWN);
+    ngx_start_worker_processes(cycle, ccf->worker_processes,NGX_PROCESS_RESPAWN);
 
     // cache进程
     ngx_start_cache_manager_processes(cycle, 0);
@@ -390,8 +389,7 @@ ngx_master_process_cycle(ngx_cycle_t *cycle)
             ngx_reopen = 0;
             ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "reopening logs");
             ngx_reopen_files(cycle, ccf->user);
-            ngx_signal_worker_processes(cycle,
-                                        ngx_signal_value(NGX_REOPEN_SIGNAL));
+            ngx_signal_worker_processes(cycle,ngx_signal_value(NGX_REOPEN_SIGNAL));
         }
 
         // 热更新nginx可执行文件
@@ -425,7 +423,13 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
         /* fatal */
         exit(2);
     }
-
+#if 1
+src/http/modules/ngx_http_userid_filter_module.c:181:  ngx_http_userid_init_worker,           /* init process */
+src/http/modules/perl/ngx_http_perl_module.c:122:      ngx_http_perl_init_worker,             /* init process */
+src/event/ngx_event.c:184:                             ngx_event_process_init,                /* init process */
+src/core/ngx_thread_pool.c:90:                         ngx_thread_pool_init_worker,           /* init process */
+src/misc/ngx_google_perftools_module.c:57:             ngx_google_perftools_worker,           /* init process */
+#endif
     // 调用所有模块的init_process，即进程启动时hook
     for (i = 0; cycle->modules[i]; i++) {
         if (cycle->modules[i]->init_process) {
@@ -515,8 +519,7 @@ ngx_start_worker_processes(ngx_cycle_t *cycle, ngx_int_t n, ngx_int_t type)
         // 创建的进程都在ngx_processes数组里
         // 定义在os/unix/ngx_process.c
         // ngx_process_t    ngx_processes[NGX_MAX_PROCESSES];
-        ngx_spawn_process(cycle, ngx_worker_process_cycle,
-                          (void *) (intptr_t) i, "worker process", type);
+        ngx_spawn_process(cycle, ngx_worker_process_cycle,(void *) (intptr_t) i, "worker process", type);
 
         // 设置channel信息
         ch.pid = ngx_processes[ngx_process_slot].pid;

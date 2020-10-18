@@ -79,6 +79,12 @@ ngx_event_del_timer(ngx_event_t *ev)
 // 在头文件里声明静态函数，是为了加快调用的速度？？
 // 向定时器红黑树里添加事件，ngx_event_expire_timers()超时后会调用ev->handler
 // #define ngx_add_timer        ngx_event_add_timer
+/*
+该函数用于将事件加入到红黑树中，首先设置超时时间，也就是当前的时间加上传进来的超
+时时间。然后再将timer域加入到红黑树中就可以了，这里timer域的定义说白了是一棵红黑树
+节点。然后还有一个函数ngx_event_del_timer，它用于将某个事件从红黑树当中移除。
+
+*/
 static ngx_inline void
 ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
 {
@@ -87,7 +93,7 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
 
     // 红黑树key是毫秒时间戳
     // 当前时间加上超时的时间
-    key = ngx_current_msec + timer;
+    key = ngx_current_msec + timer;     
 
     // 如果之前已经加入了定时器红黑树
     // 那么就重新设置时间
@@ -106,12 +112,9 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
         // 允许有300毫秒的误差
         // 减少对红黑树的操作，加快速度提高性能
         if (ngx_abs(diff) < NGX_TIMER_LAZY_DELAY) {
-            ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                           "event timer: %d, old: %M, new: %M",
-                            ngx_event_ident(ev->data), ev->timer.key, key);
+            ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,"event timer: %d, old: %M, new: %M",ngx_event_ident(ev->data), ev->timer.key, key);
             return;
         }
-
         // 删除定时器，然后重新加入
         ngx_del_timer(ev);
     }
@@ -119,9 +122,7 @@ ngx_event_add_timer(ngx_event_t *ev, ngx_msec_t timer)
     // 设置事件的key
     ev->timer.key = key;
 
-    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                   "event timer add: %d: %M:%M",
-                    ngx_event_ident(ev->data), timer, ev->timer.key);
+    ngx_log_debug3(NGX_LOG_DEBUG_EVENT, ev->log, 0,"event timer add: %d: %M:%M",ngx_event_ident(ev->data), timer, ev->timer.key);
 
     // 加入红黑树
     ngx_rbtree_insert(&ngx_event_timer_rbtree, &ev->timer);

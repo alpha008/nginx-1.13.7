@@ -330,15 +330,12 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
 {
     ngx_uint_t  flags;
     ngx_msec_t  timer, delta;
-
     // ccf->timer_resolution
     // nginx更新缓存时间的精度，如果设置了会定时发送sigalarm信号更新时间
     // ngx_timer_resolution = ccf->timer_resolution;默认值是0
     if (ngx_timer_resolution) {
-        // 要求epoll无限等待事件的发生，直至被sigalarm信号中断
-        timer = NGX_TIMER_INFINITE;
+        timer = NGX_TIMER_INFINITE;//要求epoll无限等待事件的发生，直至被sigalarm信号中断
         flags = 0;
-
     } else {
         // 没有设置时间精度，默认设置
         // 在定时器红黑树里找到最小的时间，二叉树查找很快
@@ -347,24 +344,17 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         // timer==0意味着在红黑树里已经有事件超时了，必须立即处理
         // timer==0，epoll就不会等待，收集完事件立即返回
         timer = ngx_event_find_timer();
-
         // NGX_UPDATE_TIME要求epoll等待这个时间，然后主动更新时间
         flags = NGX_UPDATE_TIME;
-
         // nginx 1.9.x不再使用old threads代码
 #if (NGX_WIN32)
-
         /* handle signals from master in case of network inactivity */
-
         if (timer == NGX_TIMER_INFINITE || timer > 500) {
             timer = 500;
         }
-
 #endif
     }
-
     // 现在已经设置了合适的timer和flag
-
     // 负载均衡锁标志量， accept_mutex on
     // 1.9.x，如果使用了reuseport，那么ngx_use_accept_mutex==0
     //
@@ -375,10 +365,8 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         // ngx_accept_disabled是总连接数的1/8-空闲连接数
         // 也就是说空闲连接数小于总数的1/8,那么就暂时停止接受连接
         if (ngx_accept_disabled > 0) {
-
             // 但也不能永远不接受连接，毕竟还是有空闲连接的，所以每次要减一
             ngx_accept_disabled--;
-
         } else {
             // 尝试获取负载均衡锁，开始监听端口
             // 如未获取则不监听端口
@@ -387,19 +375,15 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
                 // 如果监听失败，那么直接结束函数，不处理epoll事件
                 return;
             }
-
             // ngx_trylock_accept_mutex执行成功
             // 使用变量ngx_accept_mutex_held检查是否成功获取了锁
-
             // 确实已经获得了锁，接下来的epoll的事件需要加入延后队列处理
             // 这样可以尽快释放锁给其他进程，提高运行效率
             if (ngx_accept_mutex_held) {
-
                 // 加上NGX_POST_EVENTS标志
                 // epoll获得的所有事件都会加入到ngx_posted_events
                 // 待释放锁后再逐个处理，尽量避免过长时间持有锁
                 flags |= NGX_POST_EVENTS;
-
             } else {
                 // 未获取到锁
                 // 要求epoll无限等待，或者等待时间超过配置的ngx_accept_mutex_delay
@@ -416,45 +400,34 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
             }
         }
     }   //ngx_use_accept_mutex
-
     // 如果不使用负载均衡，或者没有抢到锁
     // 那么就不会使用延后处理队列，即没有NGX_POST_EVENTS标志
-
     // 1.11.3开始，默认不使用负载均衡锁，提高性能
     // 省去了锁操作和队列操作
-
     // 不管是否获得了负载均衡锁，都要处理事件和定时器
     // 如果获得了负载均衡锁,事件就会多出一个accept事件
     // 否则只有普通的读写事件和定时器事件
-
     // 1.17.5新增,处理ngx_posted_next_events
     if (!ngx_queue_empty(&ngx_posted_next_events)) {
         ngx_event_move_posted_next(cycle);
         timer = 0;
     }
-
     // 获取当前的时间，毫秒数
     delta = ngx_current_msec;
-
     // #define ngx_process_events   ngx_event_actions.process_events
     // 实际上就是ngx_epoll_process_events
-    //
     // epoll模块核心功能，调用epoll_wait处理发生的事件
     // 使用event_list和nevents获取内核返回的事件
     // timer是无事件发生时最多等待的时间，即超时时间
     // 如果ngx_event_find_timer返回timer==0，那么epoll不会等待，立即返回
     // 函数可以分为两部分，一是用epoll获得事件，二是处理事件，加入延后队列
-    //
     // 如果不使用负载均衡（accept_mutex off）
     // 那么所有IO事件均在此函数里处理，即搜集事件并调用handler
     (void) ngx_process_events(cycle, timer, flags);
-
     // 在ngx_process_events里缓存的时间肯定已经更新
     // 计算得到epoll一次调用消耗的毫秒数
     delta = ngx_current_msec - delta;
-
-    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                   "timer delta: %M", delta);
+    ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,"timer delta: %M", delta);
 
     // 先处理连接事件，通常只有一个accept的连接
     // in ngx_event_posted.c
@@ -464,7 +437,6 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
     // 如果不使用负载均衡（accept_mutex off）或者reuseport
     // 那么此处就是空操作，因为队列为空
     ngx_event_process_posted(cycle, &ngx_posted_accept_events);
-
     // 释放锁，其他进程可以获取，再监听端口
     // 这里只处理accept事件，工作量小，可以尽快释放锁，供其他进程使用
     if (ngx_accept_mutex_held) {
@@ -473,14 +445,18 @@ ngx_process_events_and_timers(ngx_cycle_t *cycle)
         // 再走ngx_trylock_accept_mutex决定端口的监听权
         ngx_shmtx_unlock(&ngx_accept_mutex);
     }
-
     // 如果消耗了一点时间，那么看看是否定时器里有过期的
     if (delta) {
         // 遍历定时器红黑树，找出所有过期的事件，调用handler处理超时
         // 其中可能有的socket读写超时，那么就结束请求，断开连接
         ngx_event_expire_timers();
     }
-
+    
+    /*遍历定时器红黑树，找出所有过期的事件，调用handler处理超时
+    ，在worker进程的每一次循环中都会调用ngx_process_events_and_timers函数，在该函数中就会调用处
+    理定时器的函数ngx_event_expire_timers，每次该函数都不断的从红黑树中取出时间值最小的，查
+    看他们是否已经超时，然后执行他们的函数，直到取出的节点的时间没有超时为止。*/
+    
     // 接下来处理延后队列里的事件，即调用事件的handler(ev)，收发数据
     // in ngx_event_posted.c
     // 这里因为要处理大量的事件，而且是简单的顺序调用，所以可能会阻塞
@@ -677,10 +653,7 @@ ngx_event_init_conf(ngx_cycle_t *cycle, void *conf)
          * socket, plus an additional connection for channel
          */
 
-        ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,
-                      "%ui worker_connections are not enough "
-                      "for %ui listening sockets",
-                      cycle->connection_n, cycle->listening.nelts);
+        ngx_log_error(NGX_LOG_EMERG, cycle->log, 0,"%ui worker_connections are not enough ""for %ui listening sockets",cycle->connection_n, cycle->listening.nelts);
 
         return NGX_CONF_ERROR;
     }
@@ -1131,10 +1104,10 @@ ngx_event_process_init(ngx_cycle_t *cycle)
         // 连接的listening对象
         // 两者相互连接
         c->listening = &ls[i];
-        ls[i].connection = c;
+        ls[i].connection = c;  // 监听套接字申请连接池结构元素
 
         // 监听端口只关心读事件
-        rev = c->read; // 监听端口只关心可读事件
+        rev = c->read;          // 监听端口只关心可读事件
         rev->log = c->log;
         // 设置accept标志，接受连接
         rev->accept = 1;
@@ -1164,7 +1137,7 @@ ngx_event_process_init(ngx_cycle_t *cycle)
 
 //#if (NGX_WIN32)
 #if 0
-
+#if 0
         if (ngx_event_flags & NGX_USE_IOCP_EVENT) {
             ngx_iocp_conf_t  *iocpcf;
 
@@ -1198,45 +1171,33 @@ ngx_event_process_init(ngx_cycle_t *cycle)
                 return NGX_ERROR;
             }
         }
-
+#endif
 #else
-
         // 重要！！
         // 设置接受连接的回调函数为ngx_event_accept
         // 监听端口上收到连接请求时的回调函数，即事件handler
         // 从cycle的连接池里获取连接
         // 关键操作 ls->handler(c);调用其他模块的业务handler
         // 1.10使用ngx_event_recvmsg接收udp
-
         //  rev/wev都是事件
         rev->handler = (c->type == SOCK_STREAM) ? ngx_event_accept: ngx_event_recvmsg;
-
-
 #if (NGX_HAVE_REUSEPORT)
-
         // reuseport无视负载均衡，直接开始监听
         if (ls[i].reuseport) {
             if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) {
                 return NGX_ERROR;
             }
-
             continue;
         }
-
 #endif
-
         // 如果使用负载均衡，不向epoll添加事件，只有抢到锁才添加
         if (ngx_use_accept_mutex) {
             continue;
         }
-
 #if (NGX_HAVE_EPOLLEXCLUSIVE)
-
-        if ((ngx_event_flags & NGX_USE_EPOLL_EVENT)
-            && ccf->worker_processes > 1)
+        if ((ngx_event_flags & NGX_USE_EPOLL_EVENT)&& ccf->worker_processes > 1)
         {
             // nginx 1.9.x不再使用rtsig
-
             // 单进程、未明确指定负载均衡，不使用负载均衡
             // 直接加入epoll事件，开始监听，可以接受请求
             // 如果支持EPOLLEXCLUSIVE，使用特殊的标志位
@@ -1244,19 +1205,16 @@ ngx_event_process_init(ngx_cycle_t *cycle)
             {
                 return NGX_ERROR;
             }
-
             // 跳过下面的普通add event
             continue;
         }
 
 #endif
-
         // 单进程、未明确指定负载均衡，不使用负载均衡
         // 直接加入epoll事件，开始监听，可以接受请求
         if (ngx_add_event(rev, NGX_READ_EVENT, 0) == NGX_ERROR) {
             return NGX_ERROR;
         }
-
 #endif
 
     } // 为每个监听端口分配一个连接对象循环结束

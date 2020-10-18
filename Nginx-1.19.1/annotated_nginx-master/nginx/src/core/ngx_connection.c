@@ -587,24 +587,17 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
             s = ngx_socket(ls[i].sockaddr->sa_family, ls[i].type, 0);
 
             if (s == (ngx_socket_t) -1) {
-                ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                              ngx_socket_n " %V failed", &ls[i].addr_text);
+                ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_socket_n " %V failed", &ls[i].addr_text);
                 return NGX_ERROR;
             }
 
             // 设置SO_REUSEADDR选项
-            if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,
-                           (const void *) &reuseaddr, sizeof(int))
-                == -1)
+            if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR,(const void *) &reuseaddr, sizeof(int))== -1)
             {
-                ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                              "setsockopt(SO_REUSEADDR) %V failed",
-                              &ls[i].addr_text);
+                ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,"setsockopt(SO_REUSEADDR) %V failed",&ls[i].addr_text);
 
                 if (ngx_close_socket(s) == -1) {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  ngx_close_socket_n " %V failed",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_close_socket_n " %V failed",&ls[i].addr_text);
                 }
 
                 return NGX_ERROR;
@@ -622,18 +615,12 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 // SO_REUSEPORT_LB目前仅在FreeBSD里有效
 #ifdef SO_REUSEPORT_LB
 
-                if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT_LB,
-                               (const void *) &reuseport, sizeof(int))
-                    == -1)
+                if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT_LB,(const void *) &reuseport, sizeof(int))== -1)
                 {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  "setsockopt(SO_REUSEPORT_LB) %V failed",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,"setsockopt(SO_REUSEPORT_LB) %V failed",&ls[i].addr_text);
 
                     if (ngx_close_socket(s) == -1) {
-                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                      ngx_close_socket_n " %V failed",
-                                      &ls[i].addr_text);
+                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_close_socket_n " %V failed",&ls[i].addr_text);
                     }
 
                     return NGX_ERROR;
@@ -641,18 +628,12 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
 #else
 
-                if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT,
-                               (const void *) &reuseport, sizeof(int))
-                    == -1)
+                if (setsockopt(s, SOL_SOCKET, SO_REUSEPORT,(const void *) &reuseport, sizeof(int))== -1)
                 {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  "setsockopt(SO_REUSEPORT) %V failed",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,"setsockopt(SO_REUSEPORT) %V failed",&ls[i].addr_text);
 
                     if (ngx_close_socket(s) == -1) {
-                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                      ngx_close_socket_n " %V failed",
-                                      &ls[i].addr_text);
+                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_close_socket_n " %V failed",&ls[i].addr_text);
                     }
 
                     return NGX_ERROR;
@@ -668,13 +649,9 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
                 ipv6only = ls[i].ipv6only;
 
-                if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
-                               (const void *) &ipv6only, sizeof(int))
-                    == -1)
+                if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,(const void *) &ipv6only, sizeof(int))== -1)
                 {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  "setsockopt(IPV6_V6ONLY) %V failed, ignored",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,"setsockopt(IPV6_V6ONLY) %V failed, ignored",&ls[i].addr_text);
                 }
             }
 #endif
@@ -684,14 +661,10 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
 
                 // 设置为nonblocking，使用FIONBIO
                 if (ngx_nonblocking(s) == -1) {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  ngx_nonblocking_n " %V failed",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_nonblocking_n " %V failed",&ls[i].addr_text);
 
                     if (ngx_close_socket(s) == -1) {
-                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                      ngx_close_socket_n " %V failed",
-                                      &ls[i].addr_text);
+                        ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_close_socket_n " %V failed",&ls[i].addr_text);
                     }
 
                     return NGX_ERROR;
@@ -706,14 +679,11 @@ ngx_open_listening_sockets(ngx_cycle_t *cycle)
                 err = ngx_socket_errno;
 
                 if (err != NGX_EADDRINUSE || !ngx_test_config) {
-                    ngx_log_error(NGX_LOG_EMERG, log, err,
-                                  "bind() to %V failed", &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, err,"bind() to %V failed", &ls[i].addr_text);
                 }
 
                 if (ngx_close_socket(s) == -1) {
-                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,
-                                  ngx_close_socket_n " %V failed",
-                                  &ls[i].addr_text);
+                    ngx_log_error(NGX_LOG_EMERG, log, ngx_socket_errno,ngx_close_socket_n " %V failed",&ls[i].addr_text);
                 }
 
                 if (err != NGX_EADDRINUSE) {

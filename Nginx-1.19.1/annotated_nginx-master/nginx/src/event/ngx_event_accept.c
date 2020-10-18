@@ -24,9 +24,10 @@ static ngx_int_t ngx_disable_accept_events(ngx_cycle_t *cycle, ngx_uint_t all);
 static void ngx_close_accepted_connection(ngx_connection_t *c);
 
 // 仅接受tcp连接
-// ngx_event_process_init里设置接受连接的回调函数为ngx_event_accept，可以接受连接
-// 监听端口上收到连接请求时的回调函数，即事件handler
-// 从cycle的连接池里获取连接
+// ngx_event_process_init里设置接受连接的回调
+// 函数为ngx_event_accept，可以接受连接
+// 监听端口上收到连接请求时的回调函数，即事件
+// handler 从cycle的连接池里获取连接
 // 关键操作 ls->handler(c);调用其他模块的业务handler
 void
 ngx_event_accept(ngx_event_t *ev)
@@ -799,7 +800,7 @@ ngx_trylock_accept_mutex(ngx_cycle_t *cycle)
 
         // 遍历监听端口列表，加入epoll连接事件，开始接受请求
         if (ngx_enable_accept_events(cycle) == NGX_ERROR) {
-
+// 重点记忆，将监听端口，加入到
             // 如果监听失败就需要立即解锁，函数结束
             ngx_shmtx_unlock(&ngx_accept_mutex);
             return NGX_ERROR;
@@ -842,7 +843,6 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
     ngx_uint_t         i;
     ngx_listening_t   *ls;
     ngx_connection_t  *c;
-
     // 遍历监听端口列表
     ls = cycle->listening.elts;
     for (i = 0; i < cycle->listening.nelts; i++) {
@@ -854,14 +854,12 @@ ngx_enable_accept_events(ngx_cycle_t *cycle)
         if (c == NULL || c->read->active) {
             continue;
         }
-
         // #define ngx_add_event        ngx_event_actions.add
         // 加入读事件，即接受连接事件
         if (ngx_add_event(c->read, NGX_READ_EVENT, 0) == NGX_ERROR) {
             return NGX_ERROR;
         }
     }
-
     return NGX_OK;
 }
 

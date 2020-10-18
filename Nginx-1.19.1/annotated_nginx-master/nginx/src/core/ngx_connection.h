@@ -54,7 +54,7 @@ struct ngx_listening_s {
     // 重要函数，tcp连接成功时的回调函数
     // 对于http模块是ngx_http_request.c:ngx_http_init_connection
     // stream模块是ngx_stream_init_connection
-    ngx_connection_handler_pt   handler;
+    ngx_connection_handler_pt   handler;  // 这个handler是提前写好的
     // 用于解决多个server监听相同端口的情况
     // http模块是ngx_http_in_addr_t,
     // stream模块是ngx_stream_addr_conf_t
@@ -171,6 +171,7 @@ typedef enum {
 // 连接结构体，表示nginx里的一个tcp连接
 // 每个连接都有一个读事件和写事件，使用数组序号对应
 // nginx里的连接对象都保存在ngx_cycle_t::connections数组里
+//(93+232 )*2
 struct ngx_connection_s {
     // data成员有两种用法
     // 未使用（空闲）时作为链表的后继指针，连接在ngx_cycle_t::free_connections里

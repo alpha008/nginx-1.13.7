@@ -28,28 +28,27 @@ typedef struct {
     void        **loc_conf;
 } ngx_http_conf_ctx_t;
 
+
+// 执行顺序
 // http模块的函数表，在配置解析阶段被框架调用
 typedef struct {
     // ngx_http_block里，创建配置结构体后，开始解析之前调用
-    // 常用于添加变量定义
+    //4 常用于添加变量定义
     ngx_int_t   (*preconfiguration)(ngx_conf_t *cf);
-
     // ngx_http_block里，解析、合并完配置后调用
-    // 常用于初始化模块的phases handler
+    //8 常用于初始化模块的phases handler
     ngx_int_t   (*postconfiguration)(ngx_conf_t *cf);
-
-    // 创建模块的main配置，只有一个，在http main域
+    //1 创建模块的main配置，只有一个，在http main域
     void       *(*create_main_conf)(ngx_conf_t *cf);
-
-    // 初始化模块的main配置，只有一个，在http main域
+    //5 初始化模块的main配置，只有一个，在http main域
     char       *(*init_main_conf)(ngx_conf_t *cf, void *conf);
-
-    // 创建、合并模块的srv配置
+    //2 创建、合并模块的srv配置
     void       *(*create_srv_conf)(ngx_conf_t *cf);
+    //6
     char       *(*merge_srv_conf)(ngx_conf_t *cf, void *prev, void *conf);
-
-    // 创建、合并模块的location配置
+    //3 创建、合并模块的location配置
     void       *(*create_loc_conf)(ngx_conf_t *cf);
+    //7 
     char       *(*merge_loc_conf)(ngx_conf_t *cf, void *prev, void *conf);
 } ngx_http_module_t;
 

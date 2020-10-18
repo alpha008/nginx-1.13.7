@@ -103,7 +103,6 @@ static ngx_core_module_t  ngx_stream_module_ctx = {
     NULL
 };
 
-
 ngx_module_t  ngx_stream_module = {
     NGX_MODULE_V1,
 

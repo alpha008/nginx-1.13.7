@@ -456,31 +456,3 @@ ngx_pool_delete_file(void *data)
     }
 }
 
-
-#if 0
-
-static void *
-ngx_get_cached_block(size_t size)
-{
-    void                     *p;
-    ngx_cached_block_slot_t  *slot;
-
-    if (ngx_cycle->cache == NULL) {
-        return NULL;
-    }
-
-    slot = &ngx_cycle->cache[(size + ngx_pagesize - 1) / ngx_pagesize];
-
-    slot->tries++;
-
-    if (slot->number) {
-        p = slot->block;
-        slot->block = slot->block->next;
-        slot->number--;
-        return p;
-    }
-
-    return NULL;
-}
-
-#endif

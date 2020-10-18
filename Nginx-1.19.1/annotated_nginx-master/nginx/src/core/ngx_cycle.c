@@ -226,22 +226,20 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     // 默认数组长度是10
     n = old_cycle->listening.nelts ? old_cycle->listening.nelts : 10;
 
-    if (ngx_array_init(&cycle->listening, pool, n, sizeof(ngx_listening_t))
-        != NGX_OK)
+    if (ngx_array_init(&cycle->listening, pool, n, sizeof(ngx_listening_t))!= NGX_OK)
     {
         ngx_destroy_pool(pool);
         return NULL;
     }
-
     ngx_memzero(cycle->listening.elts, n * sizeof(ngx_listening_t));
 
 
     ngx_queue_init(&cycle->reusable_connections_queue);
 
-
     // 创建配置结构体数组，大小是总模块数量
     // 1.10之后ngx_max_module是模块数量的上限
     cycle->conf_ctx = ngx_pcalloc(pool, ngx_max_module * sizeof(void *));
+    
     if (cycle->conf_ctx == NULL) {
         ngx_destroy_pool(pool);
         return NULL;
@@ -282,20 +280,16 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
     }
 
 
-    // 初始化core模块
-    for (i = 0; cycle->modules[i]; i++) {
+    
+    for (i = 0; cycle->modules[i]; i++) {  // 初始化core模块
         // 检查type，只处理core模块，数量很少
         if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
-
         //获取core模块的函数表
         module = cycle->modules[i]->ctx;
-
-        // 创建core模块的配置结构体
-        // 有的core模块可能没有这个函数，所以做一个空指针检查
-        if (module->create_conf) {
-            rv = module->create_conf(cycle);
+        if (module->create_conf) {//如果有那么就创建 ， 创建core模块的配置结构体，
+            rv = module->create_conf(cycle); //有的core模块可能没有这个函数，所以做一个空指针检查
             if (rv == NULL) {
                 ngx_destroy_pool(pool);
                 return NULL;
@@ -304,14 +298,9 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             cycle->conf_ctx[cycle->modules[i]->index] = rv;
         }
     }
-
-
     senv = environ;
-
-
     // 准备解析配置文件，先清零
     ngx_memzero(&conf, sizeof(ngx_conf_t));
-
     // 配置参数数组预存10个元素
     /* STUB: init array ? */
     conf.args = ngx_array_create(pool, 10, sizeof(ngx_str_t));
@@ -326,20 +315,15 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         ngx_destroy_pool(pool);
         return NULL;
     }
-
-
     // 设置配置解析的环境，重点是conf.ctx，目前指向的是cycle->conf_ctx
     conf.ctx = cycle->conf_ctx;
     conf.cycle = cycle;
     conf.pool = pool;
     conf.log = log;
-
     //另一个重要参数，当前解析环境的模块类型
     conf.module_type = NGX_CORE_MODULE;
-
     // 当前解析环境的指令类型，解析时会进行判断
     conf.cmd_type = NGX_MAIN_CONF;
-
 #if 0
     log->log_level = NGX_LOG_DEBUG_ALL;
 #endif
@@ -363,10 +347,8 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
 
     // 如果是-t检查配置，在这里就输出检查成功
     if (ngx_test_config && !ngx_quiet_mode) {
-        ngx_log_stderr(0, "the configuration file %s syntax is ok",
-                       cycle->conf_file.data);
+        ngx_log_stderr(0, "the configuration file %s syntax is ok",cycle->conf_file.data);
     }
-
     // 其他类型的模块都已经配置好了，最后对core模块配置初始化
     // 如果有的参数没有明确配置，这里就调用init_conf设置默认值
     for (i = 0; cycle->modules[i]; i++) {
@@ -374,16 +356,12 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
         if (cycle->modules[i]->type != NGX_CORE_MODULE) {
             continue;
         }
-
         //获取core模块的函数表
         module = cycle->modules[i]->ctx;
-
         // 调用core模块的初始化函数
         // 有的core模块可能没有这个函数，所以做一个空指针检查
         if (module->init_conf) {
-            if (module->init_conf(cycle,
-                                  cycle->conf_ctx[cycle->modules[i]->index])
-                == NGX_CONF_ERROR)
+            if (module->init_conf(cycle,cycle->conf_ctx[cycle->modules[i]->index])== NGX_CONF_ERROR)
             {
                 environ = senv;
                 ngx_destroy_cycle_pools(&conf);
@@ -391,29 +369,22 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             }
         }
     }
-
     // 如果是发送信号，那么不需要下面的打开文件等动作
     // ngx_process 定义在os/unix/ngx_process_cycle.c
     if (ngx_process == NGX_PROCESS_SIGNALLER) {
         return cycle;
     }
-
     // 获取core模块的配置
     ccf = (ngx_core_conf_t *) ngx_get_conf(cycle->conf_ctx, ngx_core_module);
-
     if (ngx_test_config) {
-
         if (ngx_create_pidfile(&ccf->pid, log) != NGX_OK) {
             goto failed;
         }
-
     } else if (!ngx_is_init_cycle(old_cycle)) {
-
         /*
          * we do not create the pid file in the first ngx_init_cycle() call
          * because we need to write the demonized process pid
          */
-
         old_ccf = (ngx_core_conf_t *) ngx_get_conf(old_cycle->conf_ctx,
                                                    ngx_core_module);
         if (ccf->pid.len != old_ccf->pid.len
@@ -428,19 +399,13 @@ ngx_init_cycle(ngx_cycle_t *old_cycle)
             ngx_delete_pidfile(old_cycle);
         }
     }
-
-
     if (ngx_test_lockfile(cycle->lock_file.data, log) != NGX_OK) {
         goto failed;
     }
-
-
     // 创建必要的目录
     if (ngx_create_paths(cycle, ccf->user) != NGX_OK) {
         goto failed;
     }
-
-
     // 打开默认的日志文件
     // 初始化new_log
     if (ngx_log_open_default(cycle) != NGX_OK) {

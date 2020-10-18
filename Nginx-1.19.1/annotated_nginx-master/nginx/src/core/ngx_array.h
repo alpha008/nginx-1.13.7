@@ -59,7 +59,6 @@ ngx_array_init(ngx_array_t *array, ngx_pool_t *pool, ngx_uint_t n, size_t size)
      * set "array->nelts" before "array->elts", otherwise MSVC thinks
      * that "array->nelts" may be used without having been initialized
      */
-
     // 重新初始化数组属性
     array->nelts = 0;
     array->size = size;

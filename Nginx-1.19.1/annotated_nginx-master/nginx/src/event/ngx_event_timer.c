@@ -76,7 +76,11 @@ ngx_event_find_timer(void)
 }
 
 
-// 遍历定时器红黑树，找出所有过期的事件，调用handler处理超时
+/*遍历定时器红黑树，找出所有过期的事件，调用handler处理超时
+，在worker进程的每一次循环中都会调用ngx_process_events_and_timers函数，在该函数中就会调用处
+理定时器的函数ngx_event_expire_timers，每次该函数都不断的从红黑树中取出时间值最小的，查
+看他们是否已经超时，然后执行他们的函数，直到取出的节点的时间没有超时为止。*/
+
 void
 ngx_event_expire_timers(void)
 {
@@ -97,23 +101,15 @@ ngx_event_expire_timers(void)
 
         // 取红黑树的最小节点
         node = ngx_rbtree_min(root, sentinel);
-
-        /* node->key > ngx_current_msec */
-
-        // 与当前时间进行比较，>0即还没有超时
-
-        // 没有了超时事件，循环退出
+        /* node->key > ngx_current_msec 与当前时间进行比较，>0即还没有超时
+        没有了超时事件，循环退出*/
         if ((ngx_msec_int_t) (node->key - ngx_current_msec) > 0) {
             return;
         }
-
         // 此事件已经超时
         // 通过offsetof获得事件对象
         ev = (ngx_event_t *) ((char *) node - offsetof(ngx_event_t, timer));
-
-        ngx_log_debug2(NGX_LOG_DEBUG_EVENT, ev->log, 0,
-                       "event timer del: %d: %M",
-                       ngx_event_ident(ev->data), ev->timer.key);
+        ngx_log_debug2(NGX_LOG_DEBUG_EVENT, ev->log, 0,"event timer del: %d: %M",ngx_event_ident(ev->data), ev->timer.key);
 
         // 事件从红黑树里移除
         ngx_rbtree_delete(&ngx_event_timer_rbtree, &ev->timer);

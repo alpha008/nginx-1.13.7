@@ -1114,8 +1114,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         }
 
         // 无限等待，却没有任何事件， 出错了
-        ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,
-                      "epoll_wait() returned no events without timeout");
+        ngx_log_error(NGX_LOG_ALERT, cycle->log, 0,"epoll_wait() returned no events without timeout");
         return NGX_ERROR;
     }
 
@@ -1154,15 +1153,11 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
         // 获取epoll的事件标志
         revents = event_list[i].events;
 
-        ngx_log_debug3(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                       "epoll: fd:%d ev:%04XD d:%p",
-                       c->fd, revents, event_list[i].data.ptr);
+        ngx_log_debug3(NGX_LOG_DEBUG_EVENT, cycle->log, 0,"epoll: fd:%d ev:%04XD d:%p",c->fd, revents, event_list[i].data.ptr);
 
         // EPOLLERR|EPOLLHUP是发生了错误
         if (revents & (EPOLLERR|EPOLLHUP)) {
-            ngx_log_debug2(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                           "epoll_wait() error on fd:%d ev:%04XD",
-                           c->fd, revents);
+            ngx_log_debug2(NGX_LOG_DEBUG_EVENT, cycle->log, 0,"epoll_wait() error on fd:%d ev:%04XD",c->fd, revents);
 
             /*
              * if the error events were returned, add EPOLLIN and EPOLLOUT
@@ -1215,8 +1210,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
             // 1.9.x使用reuseport，那么就不延后处理
             if (flags & NGX_POST_EVENTS) {
                 // 是否是接受请求的事件，两个延后处理队列
-                queue = rev->accept ? &ngx_posted_accept_events
-                                    : &ngx_posted_events;
+                queue = rev->accept ? &ngx_posted_accept_events: &ngx_posted_events;
 
                 // 暂不处理，而是加入延后处理队列
                 // 加快事件的处理速度，避免其他进程的等待
@@ -1246,8 +1240,7 @@ ngx_epoll_process_events(ngx_cycle_t *cycle, ngx_msec_t timer, ngx_uint_t flags)
                  * that was just closed in this iteration
                  */
 
-                ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,
-                               "epoll: stale event %p", c);
+                ngx_log_debug1(NGX_LOG_DEBUG_EVENT, cycle->log, 0,"epoll: stale event %p", c);
                 continue;
             }
 
